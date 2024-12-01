@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        #chatbox {
+            width: 80%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin: 5px 0;
+        }
+        .bot {
+            color: blue;
+        }
+        .user {
+            text-align: right;
+            color: green;
+        }
+        #question {
+            width: calc(100% - 110px);
+            padding: 10px;
+            margin-right: 10px;
+        }
+        #send {
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chatbox">
+        <div id="messages"></div>
+        <div>
+            <input type="text" id="question" placeholder="Ask me anything...">
+            <button id="send">Send</button>
+        </div>
+    </div>
+    <script>
+        const messages = document.getElementById("messages");
+        const questionInput = document.getElementById("question");
+        const sendButton = document.getElementById("send");
+
+        function appendMessage(message, sender) {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `message ${sender}`;
+            msgDiv.innerText = message;
+            messages.appendChild(msgDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        sendButton.addEventListener("click", async () => {
+            const question = questionInput.value.trim();
+            if (!question) return;
+
+            appendMessage(question, "user");
+            questionInput.value = "";
+
+            try {
+                const response = await fetch("http://127.0.0.1:5000/ask", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
+                if (data.answer) {
+                    appendMessage(data.answer, "bot");
+                } else {
+                    appendMessage("Error: " + data.error, "bot");
+                }
+            } catch (error) {
+                appendMessage("Error: Unable to connect to server.", "bot");
+            }
+        });
+    </script>
+</body>
+</html>
