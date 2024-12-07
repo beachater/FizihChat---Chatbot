@@ -3,100 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
+    <title>RAG API UI</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             background-color: #f4f4f4;
+            margin: 0;
         }
-        #chatbox {
-            width: 80%;
-            max-width: 600px;
-            background: white;
+
+        .container {
+            background-color: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
         }
-        #messages {
-            height: 300px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
+
+        textarea {
+            width: 100%;
+            height: 100px;
             margin-bottom: 10px;
-        }
-        .message {
-            margin: 5px 0;
-        }
-        .bot {
-            color: blue;
-        }
-        .user {
-            text-align: right;
-            color: green;
-        }
-        #question {
-            width: calc(100% - 110px);
             padding: 10px;
-            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
         }
-        #send {
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #response {
+            margin-top: 20px;
             padding: 10px;
+            background-color: #e7f7e7;
+            border-radius: 4px;
+            border: 1px solid #d1f1d1;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div id="chatbox">
-        <div id="messages"></div>
-        <div>
-            <input type="text" id="question" placeholder="Ask me anything...">
-            <button id="send">Send</button>
-        </div>
+    <div class="container">
+        <h1>Ask a Question</h1>
+        <textarea id="question" placeholder="Enter your question here..."></textarea>
+        <button onclick="askQuestion()">Submit</button>
+        <div id="response"></div>
     </div>
+
     <script>
-        const messages = document.getElementById("messages");
-        const questionInput = document.getElementById("question");
-        const sendButton = document.getElementById("send");
-
-        function appendMessage(message, sender) {
-            const msgDiv = document.createElement("div");
-            msgDiv.className = `message ${sender}`;
-            msgDiv.innerText = message;
-            messages.appendChild(msgDiv);
-            messages.scrollTop = messages.scrollHeight;
-        }
-
-        sendButton.addEventListener("click", async () => {
-            const question = questionInput.value.trim();
-            if (!question) return;
-
-            appendMessage(question, "user");
-            questionInput.value = "";
-
-            try {
-                const response = await fetch("http://127.0.0.1:5000/ask", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ question })
-                });
-                const data = await response.json();
-                if (data.answer) {
-                    appendMessage(data.answer, "bot");
-                } else {
-                    appendMessage("Error: " + data.error, "bot");
-                }
-            } catch (error) {
-                appendMessage("Error: Unable to connect to server.", "bot");
+        function askQuestion() {
+            const question = document.getElementById('question').value;
+            const responseDiv = document.getElementById('response');
+            
+            if (question.trim() === "") {
+                alert("Please enter a question.");
+                return;
             }
-        });
+
+            // Show loading text while waiting for the response
+            responseDiv.innerHTML = "Loading...";
+            responseDiv.style.display = "block";
+
+            // Make a POST request to the FastAPI backend
+            fetch('http://127.0.0.1:8080/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',  // Correct header
+                },
+                body: JSON.stringify({ question: question }),  // Send the question as JSON
+            })
+            .then(response => response.json())  // Parse the JSON response
+            .then(data => {
+                // Display the answer
+                responseDiv.innerHTML = `<strong>Answer:</strong> ${data.answer}`;
+            })
+            .catch(error => {
+                // Handle any errors
+                responseDiv.innerHTML = `Error: ${error.message}`;
+            });
+        }
     </script>
 </body>
 </html>
