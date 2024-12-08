@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FizihChat Dashboard</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      .dashboard-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100vh;
+        background: #f5f7fa;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 20px;
+        background: white;
+        height: 100px;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .header-logo {
+        font-size: 40px;
+        font-weight: 900;
+        color: #343c6a;
+      }
+
+      .search-bar {
+        display: flex;
+        align-items: center;
+        background: #f5f7fa;
+        border-radius: 25px;
+        padding: 5px 15px;
+        width: 250px;
+      }
+
+      .search-bar input {
+        border: none;
+        outline: none;
+        background: none;
+        padding: 5px;
+        margin-left: 10px;
+        font-size: 14px;
+        color: #8ba3cb;
+      }
+
+      .search-bar input::placeholder {
+        color: #8ba3cb;
+      }
+
+      .header-icons {
+        display: flex;
+        gap: 15px;
+      }
+
+      .icon-circle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        background: #f5f7fa;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      .icon-circle img {
+        width: 25px;
+        height: 25px;
+      }
+
+      .sidebar {
+        width: 250px;
+        background: white;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding-top: 20px;
+        border-right: 1px solid #e6eff5;
+      }
+
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        gap: 15px;
+        cursor: pointer;
+        color: #b1b1b1;
+      }
+
+      .sidebar-item.active {
+        background: #e6eff5;
+        color: #2d60ff;
+        font-weight: bold;
+      }
+
+      .sidebar-item-icon {
+        width: 25px;
+        height: 25px;
+      }
+
+      .main-content {
+        flex: 1;
+        background: #f5f7fa;
+        padding: 20px;
+      }
+
+      .section-title {
+        font-size: 28px;
+        font-weight: 600;
+        color: #343c6a;
+        margin-bottom: 20px;
+      }
+
+      .upload-container {
+        width: 100%;
+        max-width: 1100px;
+        background: #ffffff;
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 20px;
+        margin: 0 auto;
+      }
+
+      .cta-button {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        padding: 9px 14px;
+        background: #483ea8;
+        color: white;
+        text-transform: uppercase;
+        font-weight: bold;
+        font-size: 14px;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .file-upload-area {
+        width: 100%;
+        height: 202px;
+        margin: 20px 0;
+        background: #f8f8ff;
+        border: 1px dotted rgba(56, 78, 183, 0.3);
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      .file-upload-area span {
+        font-size: 16px;
+        font-weight: bold;
+      }
+
+      .file-upload-area .browse {
+        color: #483ea8;
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .supported-formats {
+        font-size: 12px;
+        color: #676767;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="dashboard-container">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-logo">FizihChat</div>
+        <div class="search-bar">
+          <img src="https://via.placeholder.com/20" alt="Search Icon" />
+          <input type="text" placeholder="Search for something" />
+        </div>
+        <div class="header-icons">
+          <div class="icon-circle">
+            <img src="https://via.placeholder.com/25" alt="Notification Icon" />
+          </div>
+          <div class="icon-circle">
+            <img src="https://via.placeholder.com/25" alt="Settings Icon" />
+          </div>
+          <div class="icon-circle">
+            <img
+              src="https://via.placeholder.com/50"
+              alt="Profile Icon"
+              style="border-radius: 50%"
+            />
+          </div>
+        </div>
+      </div>
+      <!-- Content -->
+      <div style="display: flex; flex: 1">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="sidebar-item active" onclick="showContent('overview')">
+            <img
+              class="sidebar-item-icon"
+              src="https://via.placeholder.com/25"
+              alt="Dashboard Icon"
+            />
+            Dashboard
+          </div>
+          <div class="sidebar-item" onclick="showContent('upload')">
+            <img
+              class="sidebar-item-icon"
+              src="https://via.placeholder.com/25"
+              alt="Upload Icon"
+            />
+            Upload Content
+          </div>
+          <div class="sidebar-item" onclick="showContent('settings-container')">
+            <img
+              class="sidebar-item-icon"
+              src="https://via.placeholder.com/25"
+              alt="Settings Icon"
+            />
+            Settings
+          </div>
+        </div>
+        <!-- Main Content -->
+        <div class="sidebar-item" id="main-content">
+          <div id="overview" class="content-section">
+            <div class="section-title">Overview</div>
+          </div>
+          <div id="upload" class="content-section" style="display: none">
+            <div class="upload-container">
+              <button class="cta-button">Upload Files</button>
+              <div class="file-upload-area">
+                <span
+                  >Drag & drop files or <span class="browse">Browse</span></span
+                >
+                <div class="supported-formats">
+                  Supported formats: JPEG, PNG, GIF, MP4, PDF, PSD, AI, Word,
+                  PPT
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-container" style="width: 1110px; height: 717px; position: relative; border-radius: 25px; background: white; display: none">
+            <!-- Profile Picture Section -->
+            <div class="profile-section" style="position: absolute; left: 30px; top: 122px; width: 132px; height: 130px;">
+              <div class="profile-image-wrapper" style="position: relative; width: 130px; height: 130px; overflow: hidden; border-radius: 50%; background: #C4C4C4;">
+                <img class="profile-image" style="position: absolute; top: -110px; left: -100px; width: 333px; height: 399px;" src="https://via.placeholder.com/333x399" />
+                <img class="profile-overlay" style="position: absolute; top: -3px; left: -156px; width: 342px; height: 228px;" src="https://via.placeholder.com/342x228" />
+              </div>
+              <div class="edit-profile-btn" style="position: absolute; right: 0px; top: 84px; width: 30px; height: 30px; background: #1814F3; border-radius: 50%;">
+                <div class="edit-icon" style="position: absolute; top: 7px; left: 8px; width: 15px; height: 15px; background: white;"></div>
+              </div>
+            </div>
+          
+            <!-- Settings Tabs -->
+            <div class="settings-tabs" style="position: absolute; top: 37px; left: 30px; width: 1050px; height: 30px;">
+              <div class="tab" style="display: inline-block; margin-right: 20px; font-size: 16px; font-weight: 500; color: #1814F3;">Edit Profile</div>
+              <div class="tab" style="display: inline-block; margin-right: 20px; font-size: 16px; font-weight: 500; color: #718EBF;">Preferences</div>
+              <div class="tab" style="display: inline-block; font-size: 16px; font-weight: 500; color: #718EBF;">Security</div>
+              <div class="underline" style="position: absolute; top: 27px; left: 0px; width: 114px; height: 3px; background: #1814F3; border-radius: 10px;"></div>
+            </div>
+          
+            <!-- User Information Fields -->
+            <div class="user-info" style="position: absolute; left: 215px; top: 119px; width: 418px;">
+              <label for="name" style="font-size: 16px; color: #232323;">Your Name</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">Charlene Reed</span>
+              </div>
+            </div>
+            
+            <div class="user-info" style="position: absolute; left: 215px; top: 221px; width: 418px;">
+              <label for="email" style="font-size: 16px; color: #232323;">Email</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">charlenereed@gmail.com</span>
+              </div>
+            </div>
+          
+            <div class="user-info" style="position: absolute; left: 662px; top: 119px; width: 418px;">
+              <label for="username" style="font-size: 16px; color: #232323;">User Name</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">Charlene Reed</span>
+              </div>
+            </div>
+          
+            <div class="user-info" style="position: absolute; left: 662px; top: 221px; width: 418px;">
+              <label for="password" style="font-size: 16px; color: #232323;">Password</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">**********</span>
+              </div>
+            </div>
+          
+            <!-- Address Information -->
+            <div class="user-info" style="position: absolute; left: 662px; top: 323px; width: 418px;">
+              <label for="present-address" style="font-size: 16px; color: #232323;">Present Address</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">San Jose, California, USA</span>
+              </div>
+            </div>
+          
+            <div class="user-info" style="position: absolute; left: 662px; top: 425px; width: 418px;">
+              <label for="city" style="font-size: 16px; color: #232323;">City</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">San Jose</span>
+              </div>
+            </div>
+          
+            <div class="user-info" style="position: absolute; left: 662px; top: 527px; width: 418px;">
+              <label for="country" style="font-size: 16px; color: #232323;">Country</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">USA</span>
+              </div>
+            </div>
+          
+            <div class="user-info" style="position: absolute; left: 215px; top: 425px; width: 418px;">
+              <label for="permanent-address" style="font-size: 16px; color: #232323;">Permanent Address</label>
+              <div class="input-field" style="width: 418px; height: 50px; margin-top: 10px; padding: 0 20px; border-radius: 15px; border: 1px solid #DFEAF2;">
+                <span style="font-size: 15px; color: #718EBF;">San Jose, California, USA</span>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function showContent(section) {
+        // Hide all sections
+        document.getElementById('overview').style.display = 'none';
+        document.getElementById('upload').style.display = 'none';
+        document.getElementsByClassName('settings-container')[0].style.display = 'none';
+        
+        // Show the selected section
+        if (section === 'overview') {
+          document.getElementById('overview').style.display = 'block';
+        } else if (section === 'upload') {
+          document.getElementById('upload').style.display = 'block';
+        } else if (section === 'settings-container') {
+          document.getElementsByClassName('settings-container')[0].style.display = 'block';
+        }
+      }
+    </script>    
+  </body>
+</html>
