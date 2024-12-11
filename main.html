@@ -306,9 +306,6 @@
       <!-- Header -->
       <div class="header">
         <div class="header-logo">FizihChat</div>
-        <div class="search-bar">
-          <input type="text" placeholder="Search for something" />
-        </div>
         <div class="header-icons">
           <div class="icon-circle">
             <img src="https://via.placeholder.com/25" alt="Notification Icon" />
@@ -353,16 +350,30 @@
           <div id="uploads" class="uploads">
             <div class="section-title">Upload Content</div>
             <div class="upload-container">
-              <div class="cta-button">Upload File</div>
-              <div class="file-upload-area">
-                <span>Drag and drop your file here or</span>
-                <span class="browse">Browse</span>
-              </div>
-              <div class="supported-formats">
-                Supported formats: .zip, .txt, .json
-              </div>
+              <label for="file-input" class="cta-button">Upload File</label>
+              <input
+                id="file-input"
+                type="file"
+                class="file-upload-area"
+                accept=".pdf,.txt,.json"
+                multiple
+                onchange="handleFileUpload(event)"
+                hidden
+              />
+              <span>Drag and drop your file here or</span>
+              <span
+                class="browse"
+                onclick="document.getElementById('file-input').click()"
+                >Browse</span
+              >
             </div>
-            <div class="cta-button">Manage Uploads</div>
+            <div class="supported-formats">
+              Supported formats: .pdf, .txt, .json
+            </div>
+            <div class="cta-button" onclick="manageUploads()">
+              Manage Uploads
+            </div>
+            <div id="file-list" class="file-list"></div>
           </div>
           <!-- Chatbot Section -->
           <div id="chatbot" class="chatbot-container" style="display: none">
@@ -473,6 +484,77 @@
           document.getElementById("chatbotInput").value = "";
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
+      }
+      let uploadedFiles = [];
+
+      function handleFileUpload(event) {
+        const files = Array.from(event.target.files);
+        files.forEach((file) => {
+          uploadedFiles.push(file);
+          uploadFileToServer(file);
+        });
+        updateFileList();
+      }
+
+      function updateFileList() {
+        const fileList = document.getElementById("file-list");
+        fileList.innerHTML = "";
+        uploadedFiles.forEach((file, index) => {
+          const listItem = document.createElement("div");
+          listItem.textContent = `${index + 1}. ${file.name}`;
+          fileList.appendChild(listItem);
+        });
+      }
+
+      async function uploadFileToServer(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const response = await fetch("http://127.0.0.1:8080/upload", {
+            method: "POST",
+            body: formData,
+          });
+          if (!response.ok) {
+            console.error(`Failed to upload file: ${file.name}`);
+          }
+        } catch (error) {
+          console.error(`Error uploading file: ${error}`);
+        }
+      }
+
+      function manageUploads() {
+        const fileListDiv = document.getElementById("file-list");
+        fileListDiv.innerHTML = "<p>Loading files...</p>"; // Temporary loading message
+    
+        // Fetch the list of files from the server
+        fetch("http://127.0.0.1:8080/uploads")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.files && data.files.length > 0) {
+              fileListDiv.innerHTML = ""; // Clear loading message
+    
+              data.files.forEach((file) => {
+                const fileItem = document.createElement("div");
+                fileItem.className = "file-item";
+    
+                const fileLink = document.createElement("a");
+                fileLink.href = `/static/${file}`;
+                fileLink.textContent = file;
+                fileLink.target = "_blank"; // Open in new tab for safety
+                fileLink.className = "file-link";
+    
+                fileItem.appendChild(fileLink);
+                fileListDiv.appendChild(fileItem);
+              });
+            } else {
+              fileListDiv.innerHTML = "<p>No files uploaded yet.</p>";
+            }
+          })
+          .catch((err) => {
+            console.error("Error fetching uploaded files:", err);
+            fileListDiv.innerHTML = "<p>Error loading files. Please try again.</p>";
+          });
       }
     </script>
   </body>

@@ -1,356 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FizihChat Dashboard</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-    .dashboard-container {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100vh;
-      background: #f5f7fa;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      background: white;
-      height: 100px;
-      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .header-logo {
-      font-size: 40px;
-      font-weight: 900;
-      color: #343c6a;
-    }
-    .search-bar {
-      display: flex;
-      align-items: center;
-      background: #f5f7fa;
-      border-radius: 25px;
-      padding: 5px 15px;
-      width: 250px;
-    }
-    .search-bar input {
-      border: none;
-      outline: none;
-      background: none;
-      padding: 5px;
-      margin-left: 10px;
-      font-size: 14px;
-      color: #8ba3cb;
-    }
-    .search-bar input::placeholder {
-      color: #8ba3cb;
-    }
-    .header-icons {
-      display: flex;
-      gap: 15px;
-    }
-    .icon-circle {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 50px;
-      height: 50px;
-      background: #f5f7fa;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    .icon-circle img {
-      width: 25px;
-      height: 25px;
-    }
-    .sidebar {
-      width: 250px;
-      background: white;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      padding-top: 20px;
-      border-right: 1px solid #e6eff5;
-    }
-    .sidebar-item {
-      display: flex;
-      align-items: center;
-      padding: 15px 20px;
-      gap: 15px;
-      cursor: pointer;
-      color: #b1b1b1;
-    }
-    .sidebar-item.active {
-      background: #e6eff5;
-      color: #2d60ff;
-      font-weight: bold;
-    }
-    .sidebar-item-icon {
-      width: 25px;
-      height: 25px;
-    }
-    .main-content {
-      flex: 1;
-      background: #f5f7fa;
-      padding: 20px;
-    }
-    .section-title {
-      font-size: 28px;
-      font-weight: 600;
-      color: #343c6a;
-      margin-bottom: 20px;
-    }
-    .upload-container {
-      width: 100%;
-      max-width: 1100px;
-      background: #ffffff;
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.05);
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 20px;
-      margin: 0 auto;
-    }
-    .cta-button {
-      display: inline-flex;
-      justify-content: center;
-      align-items: center;
-      padding: 9px 14px;
-      background: #483ea8;
-      color: white;
-      text-transform: uppercase;
-      font-weight: bold;
-      font-size: 14px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .cta-button:hover {
-      background: #3c34a6;
-    }
-    .file-upload-area {
-      width: 100%;
-      height: 202px;
-      margin: 20px 0;
-      background: #f8f8ff;
-      border: 1px dotted rgba(56, 78, 183, 0.3);
-      border-radius: 4px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-    }
-    .file-upload-area span {
-      font-size: 16px;
-      font-weight: bold;
-    }
-    .file-upload-area .browse {
-      color: #483ea8;
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    .supported-formats {
-      font-size: 12px;
-      color: #676767;
-      margin-top: 10px;
-    }
-    /* User Info and Settings */
-    .settings-container {
-      width: 100%;
-      max-width: 1110px;
-      background: white;
-      border-radius: 25px;
-      padding: 30px;
-      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.05);
-    }
-    .profile-section {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-    .profile-image-wrapper {
-      position: relative;
-      width: 130px;
-      height: 130px;
-      overflow: hidden;
-      border-radius: 50%;
-      background: #c4c4c4;
-    }
-    .profile-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .profile-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.4;
-    }
-    .edit-profile-btn {
-      position: absolute;
-      right: -10px;
-      bottom: -10px;
-      width: 30px;
-      height: 30px;
-      background: #1814f3;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .edit-icon {
-      width: 15px;
-      height: 15px;
-      background: white;
-      border-radius: 50%;
-    }
-    .settings-tabs {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 20px;
-    }
-    .tab {
-      font-size: 16px;
-      font-weight: 500;
-      color: #718ebf;
-      cursor: pointer;
-    }
-    .tab.active {
-      color: #1814f3;
-      font-weight: bold;
-    }
-    .underline {
-      width: 114px;
-      height: 3px;
-      background: #1814f3;
-      border-radius: 10px;
-      margin-top: 5px;
-    }
-    .user-info {
-      margin-top: 20px;
-    }
-    .input-field {
-      width: 100%;
-      padding: 0 20px;
-      height: 50px;
-      border-radius: 15px;
-      border: 1px solid #dfeaf2;
-      background-color: #f8f8ff;
-      font-size: 15px;
-      color: #718ebf;
-    }
-    label {
-      font-size: 16px;
-      color: #232323;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FizihChat</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Roboto, sans-serif;
+            color: #343C6A;
+            background-color: #ffffff;
+        }
+
+        .container {
+            width: 1440px;
+            height: 1024px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .brand-heading {
+            position: absolute;
+            top: 86px;
+            left: 86px;
+            font-size: 64px;
+            font-weight: 700;
+        }
+
+        .welcome-text {
+            position: absolute;
+            top: 424px;
+            left: 89px;
+            font-size: 18px;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .tagline {
+            position: absolute;
+            top: 233px;
+            left: 89px;
+            font-size: 40px;
+            font-weight: 700;
+        }
+
+        .form-container {
+            position: absolute;
+            top: 450px;
+            left: 89px;
+            width: 554px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-size: 18px;
+            color: rgba(0, 0, 0, 0.61);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 40px;
+            padding: 10px;
+            border: 1px solid #C1BBBB;
+            border-radius: 5px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .button {
+            width: 130px;
+            height: 50px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-login {
+            background-color: #343C6A;
+            color: white;
+        }
+
+        .btn-signup {
+            background-color: white;
+            color: #0C31F1;
+            border: 1px solid #343C6A;
+        }
+
+        .forgot-password {
+            color: rgba(0, 0, 0, 0.61);
+            font-size: 16px;
+        }
+
+        .image-container {
+            position: absolute;
+            top: 283px;
+            right: 80px;
+        }
+
+        .image-container img {
+            width: 528px;
+            height: 510px;
+        }
+    </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    <!-- Header -->
-    <div class="header">
-      <div class="header-logo">FizihChat</div>
-      <div class="search-bar">
-        <img src="https://via.placeholder.com/20" alt="Search Icon" />
-        <input type="text" placeholder="Search for something" />
-      </div>
-      <div class="header-icons">
-        <div class="icon-circle">
-          <img src="https://via.placeholder.com/25" alt="Notification Icon" />
-        </div>
-        <div class="icon-circle">
-          <img src="https://via.placeholder.com/25" alt="Settings Icon" />
-        </div>
-        <div class="icon-circle">
-          <img src="https://via.placeholder.com/50" alt="Profile Icon" style="border-radius: 50%" />
-        </div>
-      </div>
-    </div>
-    <!-- Content -->
-    <div style="display: flex; flex: 1">
-      <!-- Sidebar -->
-      <div class="sidebar">
-        <div class="sidebar-item active" onclick="showContent('overview')">
-          <img class="sidebar-item-icon" src="https://via.placeholder.com/25" alt="Overview Icon" /> Overview
-        </div>
-        <div class="sidebar-item" onclick="showContent('uploads')">
-          <img class="sidebar-item-icon" src="https://via.placeholder.com/25" alt="Uploads Icon" /> Uploads
-        </div>
-        <div class="sidebar-item" onclick="showContent('settings')">
-          <img class="sidebar-item-icon" src="https://via.placeholder.com/25" alt="Settings Icon" /> Settings
-        </div>
-      </div>
-      <!-- Main Content -->
-      <div class="main-content">
-        <!-- Overview Section -->
-        <div id="overview" class="overview" style="display: none">
-          <div class="section-title">Overview</div>
-        </div>
-        <!-- Uploads Section -->
-        <div id="uploads" class="uploads">
-          <div class="section-title">Upload Content</div>
-          <div class="upload-container">
-            <div class="cta-button">Upload File</div>
-            <div class="file-upload-area">
-              <span>Drag and drop your file here or</span>
-              <span class="browse">Browse</span>
-            </div>
-            <div class="supported-formats">Supported formats: .zip, .txt, .json</div>
-          </div>
-          <div class="cta-button">Manage Uploads</div>
-        </div>
-        <!-- Settings Section -->
-        <div id="settings" class="settings" style="display: none">
-          <div class="section-title">Settings</div>
-          <div class="settings-container">
-            <div class="profile-section">
-              <div class="profile-image-wrapper">
-                <img class="profile-image" src="https://via.placeholder.com/130" alt="Profile" />
-                <img class="profile-overlay" src="https://via.placeholder.com/130" alt="Profile Overlay" />
-                <div class="edit-profile-btn">
-                  <div class="edit-icon"></div>
-                </div>
-              </div>
-            </div>
-            <div class="settings-tabs">
-              <div class="tab active">User Info</div>
-              <div class="tab">Change Password</div>
-            </div>
-            <div class="underline"></div>
-            <div class="user-info">
-              <div>
-                <label for="username">Username</label>
-                <input class="input-field" id="username" type="text" />
-              </div>
-              <div>
-                <label for="email">Email</label>
-                <input class="input-field" id="email" type="email" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <div class="container">
+        <div class="brand-heading">FizihChat</div>
+        <div class="welcome-text">Welcome back! Please login to your account.</div>
+        <div class="tagline">Your brand.<br>Your way.<br>Your bot.</div>
 
-  <script>
-    function showContent(section) {
-      const sections = ['overview', 'uploads', 'settings'];
-      sections.forEach((sec) => {
-        document.getElementById(sec).style.display = sec === section ? 'block' : 'none';
-      });
-    }
-  </script>
+        <div class="form-container">
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input class="form-input" type="email" id="email" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input class="form-input" type="password" id="password" name="password" required />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="button btn-login">Login</button>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+            </form>
+            <div class="form-actions">
+                <button class="button btn-signup">Sign Up</button>
+            </div>
+        </div>
+
+        <div class="image-container">
+            <img src="https://via.placeholder.com/528x510" alt="Placeholder image" />
+        </div>
+    </div>
 </body>
 </html>

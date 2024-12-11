@@ -8,9 +8,17 @@ from langchain.schema.output_parser import StrOutputParser
 from langchain_huggingface import HuggingFaceEndpoint
 from langchain_community.vectorstores import Chroma
 from document_loader import load_documents_into_database
+from fastapi import FastAPI, File, UploadFile, HTTPException
 import os
 import argparse
 import sys
+import shutil
+
+
+# Directory to store uploaded files
+UPLOAD_DIR: str = "uploaded_files"
+os.makedirs(UPLOAD_DIR, exist_ok=True)  # Create the directory if it doesn't exist
+
 
 # Initialize FastAPI app
 app = FastAPI(title="RAG API", description="A Retrieval-Augmented Generation API using Hugging Face models.")
@@ -128,6 +136,75 @@ def parse_arguments() -> argparse.Namespace:
     )
     return parser.parse_args()
 
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    """
+    Endpoint to upload files and store them for processing.
+    """
+    try:
+        file_path = os.path.join(UPLOAD_DIR, str(file.filename))
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Extract text and add to Chroma database
+        text = extract_text_from_file(file_path)
+        add_text_to_chromadb(text)
+
+        return {"filename": file.filename, "status": "uploaded successfully"}
+    except Exception as e:
+        print(f"Error during file upload: {e}")  # Log the error to the terminal
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+def extract_text_from_file(file_path):
+    """
+    Extract text from PDF or TXT files.
+    """
+    if file_path.endswith(".txt"):
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+    elif file_path.endswith(".pdf"):
+        # Use a library like PyPDF2 or pdfminer to extract text
+        from PyPDF2 import PdfReader
+        reader = PdfReader(file_path)
+        return "\n".join(page.extract_text() for page in reader.pages)
+    else:
+        raise ValueError("Unsupported file format")
+    
+def add_text_to_chromadb(text):
+    """
+    Add extracted text to Chroma database.
+    """
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
+    chunks = splitter.split_text(text)
+
+    global db
+    if not db:
+        raise RuntimeError("Database not initialized")
+    db.add_texts(texts=chunks)
+
+
+from fastapi.responses import JSONResponse
+
+@app.get("/uploads")
+async def list_uploaded_files():
+    """
+    Return a list of uploaded files in the UPLOAD_DIR.
+    """
+    try:
+        # Ensure the upload directory exists
+        if not os.path.exists(UPLOAD_DIR):
+            return JSONResponse(content={"files": []})  # No files uploaded yet
+
+        # List files in the upload directory
+        files = os.listdir(UPLOAD_DIR)
+        return JSONResponse(content={"files": files})
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+    
+    
+    
 if __name__ == "__main__":
     args = parse_arguments()
     if not os.getenv('HUGGING_ACCESS_TOKEN'):
