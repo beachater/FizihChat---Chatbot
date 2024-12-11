@@ -121,6 +121,7 @@
         <div class="tagline">Your brand.<br>Your way.<br>Your bot.</div>
 
         <div class="form-container">
+            <!-- Login Form -->
             <form id="login-form">
                 <div class="form-group">
                     <label class="form-label" for="email">Email</label>
@@ -135,8 +136,10 @@
                     <a href="#" class="forgot-password">Forgot Password?</a>
                 </div>
             </form>
+            
+            <!-- Sign Up Button -->
             <div class="form-actions">
-                <button class="button btn-signup">Sign Up</button>
+                <button id="signup-button" class="button btn-signup">Sign Up</button>
             </div>
         </div>
 
@@ -144,5 +147,62 @@
             <img src="https://via.placeholder.com/528x510" alt="Placeholder image" />
         </div>
     </div>
+
+    <script>
+        // Handle Login Form Submit
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent form submission
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+        
+            const response = await fetch('http://localhost:8080/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `email=${email}&password=${password}`,
+            });
+        
+            const result = await response.json();
+        
+            if (response.ok) {
+                // Redirect to main.html in the same tab
+                window.location.href = 'main.html';
+        
+                // Alternatively, open in a new tab
+                // window.open('main.html', '_blank');
+            } else {
+                alert(result.detail); // Error
+            }
+        });
+
+        // Handle Sign Up Button Click
+        document.getElementById('signup-button').addEventListener('click', async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('Please fill in both email and password');
+                return; // Ensure both fields are filled before proceeding
+            }
+
+            const response = await fetch('http://localhost:8080/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `email=${email}&password=${password}`,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message); // Success
+            } else {
+                alert(result.detail); // Error
+            }
+        });
+    </script>
 </body>
 </html>
