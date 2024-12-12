@@ -17,12 +17,30 @@ import sys
 import shutil
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from pydantic import BaseModel
+from fastapi.responses import HTMLResponse
+from fpdf import FPDF
+
 
 # Directory to store uploaded files
 UPLOAD_DIR: str = "uploaded_files"
 os.makedirs(UPLOAD_DIR, exist_ok=True)  # Create the directory if it doesn't exist
 
-# Initialize FastAPI app
+infodirectory = "business_initial_information"
+if not os.path.exists(infodirectory):
+    os.makedirs(infodirectory)
+
+
+# Pydantic model for the input data
+class BusinessInfo(BaseModel):
+    companyName: str
+    description: str
+    scope: str
+    limitations: str
+
+
+    
+    
 app = FastAPI(title="RAG API", description="A Retrieval-Augmented Generation API using Hugging Face models.")
 
 # Allow CORS from the frontend
@@ -52,28 +70,28 @@ db = psycopg2.connect(
 # Load Hugging Face settings
 repo_id = 'mistralai/Mixtral-8x7B-Instruct-v0.1'
 embedding_model_name = "nomic-embed-text"
-documents_path = "Research"
+documents_path = "business_initial_information"
 db_rag = None
 rag_chain = None
 
-# Initialize the database and RAG pipeline during app startup
-@app.on_event("startup")
-async def startup_event():
+## Utility function for initializing RAG pipeline
+def initialize_rag_pipeline():
     global db_rag, rag_chain
 
+    # Check if the Hugging Face access token is set
     if not os.getenv('HUGGING_ACCESS_TOKEN'):
         raise EnvironmentError("Please set the HUGGING_ACCESS_TOKEN environment variable.")
 
     # Load documents into the database
     try:
-        db_rag = load_documents_into_database(embedding_model_name, documents_path)
+        db_rag = load_documents_into_database("nomic-embed-text", "business_initial_information")
     except FileNotFoundError as e:
         raise RuntimeError(f"Error loading documents: {e}")
 
     # Initialize the Hugging Face embeddings and LLM
     embeddings = HuggingFaceEmbeddings()
     llm = HuggingFaceEndpoint(
-        repo_id=repo_id,
+        repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
         huggingfacehub_api_token=os.getenv('HUGGING_ACCESS_TOKEN'),
         temperature=0.8,
         top_k=50
@@ -97,7 +115,45 @@ async def startup_event():
         | llm
         | StrOutputParser()
     )
+    return {"message": "RAG pipeline initialized successfully."}
 
+@app.post("/save-business-info")
+async def save_business_info(info: BusinessInfo):
+    """
+    Save business information and initialize RAG pipeline if not already initialized.
+    """
+    global db_rag, rag_chain
+
+    try:
+        # Save the business information in a .pdf file
+        file_path = os.path.join(infodirectory, f"{info.companyName.replace(' ', '_')}.pdf")
+
+        # Create a PDF instance
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+
+        # Set font
+        pdf.set_font("Arial", size=12)
+
+        # Add content to the PDF
+        pdf.cell(200, 10, txt=f"Company Name: {info.companyName}", ln=True)
+        pdf.cell(200, 10, txt=f"Description: {info.description}", ln=True)
+        pdf.cell(200, 10, txt=f"Scope: {info.scope}", ln=True)
+        pdf.cell(200, 10, txt=f"Limitations: {info.limitations}", ln=True)
+
+        # Save the PDF
+        pdf.output(file_path)
+
+        # Initialize RAG pipeline if not already done
+        if not db_rag or not rag_chain:
+            initialize_rag_pipeline()
+
+        return {"message": "Business information saved and RAG pipeline initialized successfully."}
+    except Exception as e:
+        return {"error": str(e)}
+    
+    
 # Define API endpoints
 @app.post("/ask")
 async def ask_question(request: Request, question: dict):
@@ -258,6 +314,23 @@ def parse_arguments() -> argparse.Namespace:
         help="The path to the directory containing documents to load.",
     )
     return parser.parse_args()
+
+# @app.post("/save-business-info")
+# async def save_business_info(info: BusinessInfo):
+#     try:
+#         # Define file path
+#         file_path = os.path.join(infodirectory, f"{info.companyName.replace(' ', '_')}.txt")
+        
+#         # Save the business information in a .txt file
+#         with open(file_path, "w") as file:
+#             file.write(f"Company Name: {info.companyName}\n")
+#             file.write(f"Description: {info.description}\n")
+#             file.write(f"Scope: {info.scope}\n")
+#             file.write(f"Limitations: {info.limitations}\n")
+
+#         return {"message": "Business information saved successfully."}
+#     except Exception as e:
+#         return {"error": str(e)}
 
 if __name__ == "__main__":
     args = parse_arguments()
