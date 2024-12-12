@@ -1,0 +1,35 @@
+<program> ::= <statements>
+
+<statements> ::= <statement> ";" <statements> | <statement> ";"
+
+<statement> ::= <assignment> | <if_statement> | <while_statement> | <function_call> | <function_declaration>
+
+<assignment> ::= <identifier> "=" <expression>
+<expression> ::= <roman_numeral> | <identifier> | <binary_expression>
+<binary_expression> ::= <expression> <operator> <expression>
+<operator> ::= "+" | "-" | "*" | "/"
+
+<if_statement> ::= "if" "(" <condition> ")" "{" <statements> "}" <else_part>
+<else_part> ::= "else" "{" <statements> "}" | " "
+
+<while_statement> ::= "while" "(" <condition> ")" "{" <statements> "}"
+<condition> ::= <expression> <comparison_operator> <expression>
+<comparison_operator> ::= "==" | "!=" | "<" | ">" | "<=" | ">="
+
+<function_call> ::= <identifier> "(" <arguments> ")" ";"
+<arguments> ::= <expression> "," <arguments> | <expression> | " "
+
+<function_declaration> ::= "function" <identifier> "(" <parameters> ")" "{" <statements> "}"
+<parameters> ::= <identifier> "," <parameters> | <identifier> | " "
+
+<roman_numeral> ::= <thousands> <hundreds> <tens> <ones>
+
+<thousands> ::= "M" <thousands> | " " 
+<hundreds>  ::= "CM" | "CD" | "D" <hundreds> | "C" <hundreds> | " "
+<tens>      ::= "XC" | "XL" | "L" <tens> | "X" <tens> | " "
+<ones>      ::= "IX" | "IV" | "V" <ones> | "I" <ones> | " "
+
+<identifier> ::= <letter> <identifier_tail>
+<identifier_tail> ::= <letter> | <digit> | <identifier_tail> | " "
+<letter> ::= "a" | "b" | "c" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y " | "z" | "A" | "B" | "C" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y " | "Z"
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"

@@ -20,7 +20,10 @@ from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 from fastapi.responses import HTMLResponse
 from fpdf import FPDF
+from psycopg2 import sql
 
+
+user_session = {}
 
 # Directory to store uploaded files
 UPLOAD_DIR: str = "uploaded_files"
@@ -38,6 +41,10 @@ class BusinessInfo(BaseModel):
     scope: str
     limitations: str
 
+
+class UserInfoUpdate(BaseModel):
+    email: str
+    username: str
 
     
     
@@ -124,6 +131,12 @@ async def save_business_info(info: BusinessInfo):
     """
     global db_rag, rag_chain
 
+    # Ensure the user is logged in by checking the user_session
+    if 'user_id' not in user_session:
+        raise HTTPException(status_code=401, detail="User not logged in.")
+    
+    user_id = user_session['user_id']
+
     try:
         # Save the business information in a .pdf file
         file_path = os.path.join(infodirectory, f"{info.companyName.replace(' ', '_')}.pdf")
@@ -144,6 +157,23 @@ async def save_business_info(info: BusinessInfo):
 
         # Save the PDF
         pdf.output(file_path)
+        
+        conn = db
+        cursor = conn.cursor()
+
+        # Insert business information into the database with user_id
+        insert_query = sql.SQL("""
+            INSERT INTO business_info (company_name, description, scope, limitations, user_id)
+            VALUES (%s, %s, %s, %s, %s)
+        """)
+        cursor.execute(insert_query, (info.companyName, info.description, info.scope, info.limitations, user_id))
+
+        # Commit the transaction
+        conn.commit()
+
+        # Close the cursor and connection
+        cursor.close()
+        conn.close()
 
         # Initialize RAG pipeline if not already done
         if not db_rag or not rag_chain:
@@ -152,7 +182,6 @@ async def save_business_info(info: BusinessInfo):
         return {"message": "Business information saved and RAG pipeline initialized successfully."}
     except Exception as e:
         return {"error": str(e)}
-    
     
 # Define API endpoints
 @app.post("/ask")
@@ -240,7 +269,10 @@ async def login_user(email: str = Form(...), password: str = Form(...)):
         
         # Check if the password matches
         if not check_password_hash(user['password'], password):
-            raise HTTPException(status_code=401, detail="Invalid password.")
+            raise HTTPException(status_code=401, detail="Invalid password.")    
+        
+        user_session['user_id'] = user['id']
+        print(user_session['user_id'])
         
         return {"message": "Login successful", "user_id": user['id']}
     except psycopg2.Error as err:
@@ -263,6 +295,153 @@ async def list_uploaded_files():
         return JSONResponse(content={"files": files})
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code=500)
+
+@app.get("/get-user-settings")
+async def get_user_settings():
+    """
+    Retrieve user information to be displayed in the settings.
+    """
+    # Ensure the user is logged in by checking the user session
+    if 'user_id' not in user_session:
+        raise HTTPException(status_code=401, detail="User not logged in.")
+    
+    user_id = user_session['user_id']
+    
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("SELECT id, email, username FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+        
+        return {
+            "user_id": user["id"],
+            "email": user["email"],
+            "username": user["username"]
+        }
+    except psycopg2.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    finally:
+        cursor.close()
+
+@app.post("/update-user-info")
+async def update_user_info(info: UserInfoUpdate):
+    """
+    Update user information (email and username).
+    """
+    # Ensure the user is logged in
+    if 'user_id' not in user_session:
+        raise HTTPException(status_code=401, detail="User not logged in.")
+    
+    user_id = user_session['user_id']
+    
+    cursor = db.cursor()
+    try:
+        # Update the user info (email, username) in the database
+        update_query = """
+            UPDATE users 
+            SET email = %s, username = %s 
+            WHERE id = %s
+        """
+        cursor.execute(update_query, (info.email, info.username, user_id))
+        db.commit()
+        
+        return {"message": "User information updated successfully"}
+    except psycopg2.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    finally:
+        cursor.close()
+
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str
+
+@app.post("/change-password")
+async def change_password(change_info: ChangePassword):
+    """
+    Change the user's password after verifying the old password.
+    """
+    # Ensure the user is logged in
+    if 'user_id' not in user_session:
+        raise HTTPException(status_code=401, detail="User not logged in.")
+    
+    user_id = user_session['user_id']
+    
+    cursor = db.cursor(cursor_factory=RealDictCursor)
+    try:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found.")
+        
+        # Verify if the old password is correct
+        if not check_password_hash(user['password'], change_info.old_password):
+            raise HTTPException(status_code=401, detail="Old password is incorrect.")
+
+        # Hash the new password and update it
+        hashed_new_password = generate_password_hash(change_info.new_password)
+        
+        cursor.execute("UPDATE users SET password = %s WHERE id = %s", (hashed_new_password, user_id))
+        db.commit()
+
+        return {"message": "Password updated successfully"}
+    except psycopg2.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    finally:
+        cursor.close()
+
+        
+        
+@app.post("/update-business-info")
+async def update_business_info(
+    user_id: int = Form(...),
+    companyName: str = Form(...),
+    description: str = Form(...),
+    scope: str = Form(...),
+    limitations: str = Form(...)
+):
+    """
+    Update business information for the logged-in user.
+    """
+    # Ensure the user is logged in
+    if 'user_id' not in user_session or user_session['user_id'] != user_id:
+        raise HTTPException(status_code=401, detail="User not logged in or unauthorized.")
+
+    cursor = db.cursor()
+    try:
+        # Update the business information in the database
+        update_query = sql.SQL("""
+            UPDATE business_info 
+            SET company_name = %s, description = %s, scope = %s, limitations = %s
+            WHERE user_id = %s
+        """)
+        cursor.execute(update_query, (companyName, description, scope, limitations, user_id))
+        
+        db.commit()
+
+        # Update the PDF file as well
+        file_path = os.path.join(infodirectory, f"{companyName.replace(' ', '_')}.pdf")
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt=f"Company Name: {companyName}", ln=True)
+        pdf.cell(200, 10, txt=f"Description: {description}", ln=True)
+        pdf.cell(200, 10, txt=f"Scope: {scope}", ln=True)
+        pdf.cell(200, 10, txt=f"Limitations: {limitations}", ln=True)
+
+        pdf.output(file_path)
+
+        return {"message": "Business information updated successfully"}
+    except psycopg2.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {e}")
+    finally:
+        cursor.close()
 
 
 def extract_text_from_file(file_path):
@@ -314,23 +493,6 @@ def parse_arguments() -> argparse.Namespace:
         help="The path to the directory containing documents to load.",
     )
     return parser.parse_args()
-
-# @app.post("/save-business-info")
-# async def save_business_info(info: BusinessInfo):
-#     try:
-#         # Define file path
-#         file_path = os.path.join(infodirectory, f"{info.companyName.replace(' ', '_')}.txt")
-        
-#         # Save the business information in a .txt file
-#         with open(file_path, "w") as file:
-#             file.write(f"Company Name: {info.companyName}\n")
-#             file.write(f"Description: {info.description}\n")
-#             file.write(f"Scope: {info.scope}\n")
-#             file.write(f"Limitations: {info.limitations}\n")
-
-#         return {"message": "Business information saved successfully."}
-#     except Exception as e:
-#         return {"error": str(e)}
 
 if __name__ == "__main__":
     args = parse_arguments()

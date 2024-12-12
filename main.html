@@ -332,7 +332,7 @@
           <div class="sidebar-item" onclick="showContent('uploads')">
             Uploads
           </div>
-          <div class="sidebar-item" onclick="showContent('settings')">
+          <div class="sidebar-item" onclick="showContent('settings'); loadUserSettings();">
             Settings
           </div>
           <div class="sidebar-item" onclick="showContent('chatbot')">
@@ -394,16 +394,8 @@
             <div class="settings-container">
               <div class="profile-section">
                 <div class="profile-image-wrapper">
-                  <img
-                    class="profile-image"
-                    src="https://via.placeholder.com/130"
-                    alt="Profile"
-                  />
-                  <img
-                    class="profile-overlay"
-                    src="https://via.placeholder.com/130"
-                    alt="Profile Overlay"
-                  />
+                  <img class="profile-image" src="https://via.placeholder.com/130" alt="Profile" />
+                  <img class="profile-overlay" src="https://via.placeholder.com/130" alt="Profile Overlay" />
                   <div class="edit-profile-btn">
                     <div class="edit-icon"></div>
                   </div>
@@ -414,7 +406,7 @@
                 <div class="tab">Change Password</div>
               </div>
               <div class="underline"></div>
-              <div class="user-info">
+              <div class="update-user-info-form">
                 <div>
                   <label for="username">Username</label>
                   <input class="input-field" id="username" type="text" />
@@ -423,12 +415,26 @@
                   <label for="email">Email</label>
                   <input class="input-field" id="email" type="email" />
                 </div>
+    
+                <button type="submit" onclick="saveSettings()">Save Changes</button>
               </div>
+              <div id="change-password-form">
+                <h2>Change Your Password</h2>
+                <form id="change-password-form-submit">
+                    <label for="old-password">Old Password:</label>
+                    <input type="password" id="old-password" name="old-password" required><br>
+    
+                    <label for="new-password">New Password:</label>
+                    <input type="password" id="new-password" name="new-password" required><br>
+    
+                    <button type="submit">Change Password</button>
+                </form>
+            </div>
+        </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+          
+          
 
     <script>
       function showContent(section) {
@@ -556,6 +562,142 @@
             fileListDiv.innerHTML = "<p>Error loading files. Please try again.</p>";
           });
       }
+
+      function populateSettings(userId) {
+        // Example API endpoint to fetch user data by user ID
+        fetch(`/user-info/${userId}`)
+          .then(response => response.json())
+          .then(data => {
+            // Populate the username, email, and password fields with the data
+            document.getElementById('username').value = data.username;
+            document.getElementById('email').value = data.email;
+            // Optional: handle password field if needed
+            // You might want to avoid directly displaying or setting the password
+          })
+          .catch(error => {
+            console.error("Error fetching user data:", error);
+          });
+      }
+
+      // Example function to handle form submission (optional)
+  function updateSettings() {
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value; // Assuming you add password input field
+
+    // You can also include user ID if needed for the update request
+    const userId = 1;  // Example userId
+
+    fetch(`/update-user-info/${userId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: username,
+        email: email,
+        password: password,  // Include password if it's part of the update
+      }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log("Settings updated successfully:", data);
+      })
+      .catch(error => {
+        console.error("Error updating settings:", error);
+      });
+    }
+
+
+    async function loadUserSettings() {
+      
+      try {
+        const response = await fetch('http://127.0.0.1:8080get-user-settings');
+        if (response.ok) {
+            const data = await response.json();
+            // Pre-fill the form with the current user info
+            document.getElementById('email').value = data.email;
+            document.getElementById('username').value = data.username;
+        } else {
+            alert('Error fetching user settings');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+    }
+  
+    // Event listener for the settings button
+    document.getElementById("settings-btn").addEventListener("click", () => {
+      document.getElementById("settings").style.display = "block"; // Show the settings
+      loadUserSettings(); // Fetch and display user info
+    });
+
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+          const response = await fetch('/get-user-settings');
+          if (response.ok) {
+              const data = await response.json();
+              // Pre-fill the form with the current user info
+              document.getElementById('email').value = data.email;
+              document.getElementById('username').value = data.username;
+          } else {
+              alert('Error fetching user settings');
+          }
+      } catch (error) {
+          console.error('Error:', error);
+      }
+  });
+
+  // Handle the update user info form submission
+  document.getElementById('update-user-info-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const username = document.getElementById('username').value;
+
+      try {
+          const response = await fetch('/update-user-info', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ email, username }),
+          });
+
+          if (response.ok) {
+              alert('User information updated successfully');
+          } else {
+              alert('Error updating user information');
+          }
+      } catch (error) {
+          console.error('Error:', error);
+      }
+  });
+
+  // Handle change password form submission
+  document.getElementById('change-password-form-submit').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const oldPassword = document.getElementById('old-password').value;
+      const newPassword = document.getElementById('new-password').value;
+
+      try {
+          const response = await fetch('/change-password', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
+          });
+
+          if (response.ok) {
+              alert('Password changed successfully');
+          } else {
+              alert('Error changing password');
+          }
+      } catch (error) {
+          console.error('Error:', error);
+      }
+  });
     </script>
   </body>
 </html>

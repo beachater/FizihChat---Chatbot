@@ -3,100 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAG API UI</title>
+    <title>FizihChat</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f4f4f4;
             margin: 0;
+            font-family: Roboto, sans-serif;
+            color: #343C6A;
+            background-color: #ffffff;
         }
 
         .container {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            text-align: center;
+            width: 1440px;
+            height: 1024px;
+            margin: 0 auto;
+            position: relative;
         }
 
-        textarea {
+        .brand-heading {
+            position: absolute;
+            top: 86px;
+            left: 86px;
+            font-size: 64px;
+            font-weight: 700;
+        }
+
+        .welcome-text {
+            position: absolute;
+            top: 424px;
+            left: 89px;
+            font-size: 18px;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        .tagline {
+            position: absolute;
+            top: 233px;
+            left: 89px;
+            font-size: 40px;
+            font-weight: 700;
+        }
+
+        .form-container {
+            position: absolute;
+            top: 450px;
+            left: 89px;
+            width: 554px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-size: 18px;
+            color: rgba(0, 0, 0, 0.61);
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .form-input {
             width: 100%;
-            height: 100px;
-            margin-bottom: 10px;
+            height: 40px;
             padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
+            border: 1px solid #C1BBBB;
+            border-radius: 5px;
         }
 
-        button {
-            background-color: #4CAF50;
-            color: white;
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .button {
+            width: 130px;
+            height: 50px;
+            font-size: 18px;
             border: none;
-            padding: 10px 20px;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
         }
 
-        button:hover {
-            background-color: #45a049;
+        .btn-login {
+            background-color: #343C6A;
+            color: white;
         }
 
-        #response {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #e7f7e7;
-            border-radius: 4px;
-            border: 1px solid #d1f1d1;
-            display: none;
+        .btn-signup {
+            background-color: white;
+            color: #0C31F1;
+            border: 1px solid #343C6A;
+        }
+
+        .forgot-password {
+            color: rgba(0, 0, 0, 0.61);
+            font-size: 16px;
+        }
+
+        .image-container {
+            position: absolute;
+            top: 283px;
+            right: 80px;
+        }
+
+        .image-container img {
+            width: 528px;
+            height: 510px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ask a Question</h1>
-        <textarea id="question" placeholder="Enter your question here..."></textarea>
-        <button onclick="askQuestion()">Submit</button>
-        <div id="response"></div>
+        <div class="brand-heading">FizihChat</div>
+        <div class="welcome-text">Welcome back! Please login to your account.</div>
+        <div class="tagline">Your brand.<br>Your way.<br>Your bot.</div>
+
+        <div class="form-container">
+            <!-- Login Form -->
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input class="form-input" type="email" id="email" name="email" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input class="form-input" type="password" id="password" name="password" required />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="button btn-login">Login</button>
+                    <a href="#" class="forgot-password">Forgot Password?</a>
+                </div>
+            </form>
+            
+            <!-- Sign Up Button -->
+            <div class="form-actions">
+                <button id="signup-button" class="button btn-signup">Sign Up</button>
+            </div>
+        </div>
+
+        <div class="image-container">
+            <img src="https://via.placeholder.com/528x510" alt="Placeholder image" />
+        </div>
     </div>
 
     <script>
-        function askQuestion() {
-            const question = document.getElementById('question').value;
-            const responseDiv = document.getElementById('response');
+        // Handle Login Form Submit
+        document.getElementById('login-form').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent form submission
             
-            if (question.trim() === "") {
-                alert("Please enter a question.");
-                return;
-            }
-
-            // Show loading text while waiting for the response
-            responseDiv.innerHTML = "Loading...";
-            responseDiv.style.display = "block";
-
-            // Make a POST request to the FastAPI backend
-            fetch('http://127.0.0.1:8080/ask', {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+        
+            const response = await fetch('http://localhost:8080/login', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',  // Correct header
+                    'Content-Type': 'application/x-www-form-urlencoded',
                 },
-                body: JSON.stringify({ question: question }),  // Send the question as JSON
-            })
-            .then(response => response.json())  // Parse the JSON response
-            .then(data => {
-                // Display the answer
-                responseDiv.innerHTML = `<strong>Answer:</strong> ${data.answer}`;
-            })
-            .catch(error => {
-                // Handle any errors
-                responseDiv.innerHTML = `Error: ${error.message}`;
+                body: `email=${email}&password=${password}`,
             });
-        }
+        
+            const result = await response.json();
+        
+            if (response.ok) {
+                // Redirect to main.html in the same tab
+                window.location.href = 'info2.html';
+        
+                // Alternatively, open in a new tab
+                // window.open('main.html', '_blank');
+            } else {
+                alert(result.detail); // Error
+            }
+        });
+
+        // Handle Sign Up Button Click
+        document.getElementById('signup-button').addEventListener('click', async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('Please fill in both email and password');
+                return; // Ensure both fields are filled before proceeding
+            }
+
+            const response = await fetch('http://localhost:8080/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `email=${email}&password=${password}`,
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message); // Success
+            } else {
+                alert(result.detail); // Error
+            }
+        });
     </script>
 </body>
 </html>
