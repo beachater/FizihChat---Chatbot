@@ -124,6 +124,17 @@ def initialize_rag_pipeline():
     )
     return {"message": "RAG pipeline initialized successfully."}
 
+@app.post("/initialize-pipeline")
+async def initialize_pipeline():
+    """
+    Initialize the RAG pipeline without saving new data.
+    """
+    try:
+        result = initialize_rag_pipeline()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/save-business-info")
 async def save_business_info(info: BusinessInfo):
     """
@@ -220,6 +231,8 @@ async def upload_file(file: UploadFile = File(...)):
         # Extract text and add to Chroma database
         text = extract_text_from_file(file_path)
         add_text_to_chromadb(text)
+        
+        print("Upload Successfull ------------------")
 
         return {"filename": file.filename, "status": "uploaded successfully"}
     except Exception as e:
@@ -298,32 +311,54 @@ async def list_uploaded_files():
 
 @app.get("/get-user-settings")
 async def get_user_settings():
-    """
-    Retrieve user information to be displayed in the settings.
-    """
-    # Ensure the user is logged in by checking the user session
     if 'user_id' not in user_session:
         raise HTTPException(status_code=401, detail="User not logged in.")
     
     user_id = user_session['user_id']
-    
-    cursor = db.cursor(cursor_factory=RealDictCursor)
-    try:
-        cursor.execute("SELECT id, email, username FROM users WHERE id = %s", (user_id,))
-        user = cursor.fetchone()
 
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found.")
-        
-        return {
-            "user_id": user["id"],
-            "email": user["email"],
-            "username": user["username"]
-        }
+    try:
+        with psycopg2.connect(
+            database="fizihchat_db",
+            user="myuser",
+            password="mypassword",
+            host="localhost",
+        ) as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT id, email FROM users WHERE id = %s", (user_id,))
+                user = cursor.fetchone()
+                if not user:
+                    raise HTTPException(status_code=404, detail="User not found.")
+                return {"email": user["email"]}
     except psycopg2.Error as err:
         raise HTTPException(status_code=500, detail=f"Database error: {err}")
-    finally:
-        cursor.close()
+
+@app.get("/get-company-info")
+async def get_company_info():
+    if 'user_id' not in user_session:
+        raise HTTPException(status_code=401, detail="User not logged in.")
+    
+    user_id = user_session['user_id']
+
+    try:
+        with psycopg2.connect(
+            database="fizihchat_db",
+            user="myuser",
+            password="mypassword",
+            host="localhost",
+        ) as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT company_name, description, scope, limitations 
+                    FROM business_info 
+                    WHERE user_id = %s
+                """, (user_id,))
+                company = cursor.fetchone()
+                if not company:
+                    raise HTTPException(status_code=404, detail="Company not found.")
+                return company
+    except psycopg2.Error as err:
+        raise HTTPException(status_code=500, detail=f"Database error: {err}")
+
 
 @app.post("/update-user-info")
 async def update_user_info(info: UserInfoUpdate):

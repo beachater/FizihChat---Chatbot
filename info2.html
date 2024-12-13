@@ -80,34 +80,73 @@
     </div>
 
     <script>
+      // Check for existing company info on page load
+      async function checkCompanyInfo() {
+        try {
+          const response = await fetch("http://127.0.0.1:8080/get-company-info");
+          if (response.ok) {
+            const companyInfo = await response.json();
+            if (companyInfo) {
+              // If company info exists, initialize and redirect
+              await initializePipeline();
+              window.location.href = "main.html";
+              return;
+            }
+          }
+        } catch (error) {
+          console.error("Error checking company info:", error);
+        }
+      }
+    
+      // Initialize the RAG pipeline
+      async function initializePipeline() {
+        try {
+          const initResponse = await fetch("http://127.0.0.1:8080/initialize-pipeline", {
+            method: "POST",
+          });
+          if (!initResponse.ok) {
+            console.error("Failed to initialize RAG pipeline.");
+          }
+        } catch (error) {
+          console.error("Error initializing RAG pipeline:", error);
+        }
+      }
+    
+      // Handle form submission
       document.getElementById("businessForm").addEventListener("submit", async function (event) {
         event.preventDefault();
-
-        // Collect form data
+    
         const formData = {
           companyName: document.getElementById("companyName").value,
           description: document.getElementById("description").value,
           scope: document.getElementById("scope").value,
           limitations: document.getElementById("limitations").value,
         };
-
-        // Send data to FastAPI backend
-        const response = await fetch("http://127.0.0.1:8080/save-business-info", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
-
-        if (response.ok) {
-          alert("Business information saved successfully!");
-          // Redirect to next page
-          window.location.href = "main.html";
-        } else {
-          alert("Failed to save business information. Please try again.");
+    
+        try {
+          const response = await fetch("http://127.0.0.1:8080/save-business-info", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          });
+    
+          if (response.ok) {
+            alert("Business information saved successfully!");
+            await initializePipeline();
+            window.location.href = "main.html";
+          } else {
+            alert("Failed to save business information. Please try again.");
+          }
+        } catch (error) {
+          console.error("Error saving business information:", error);
         }
       });
+    
+      // Call the check function on page load
+      window.onload = checkCompanyInfo;
     </script>
+    
   </body>
 </html>
